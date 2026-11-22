@@ -210,6 +210,29 @@
                 android:resource="@xml/widget_target_info" />
         </receiver>
 
+        <!-- Fork: weekly habits widget (see FORK.md) -->
+        <receiver
+            android:name=".widgets.weekly.WeeklyHabitsWidgetProvider"
+            android:exported="true"
+            android:label="@string/weekly_habits_widget">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_weekly_habits_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widgets.weekly.WeeklyHabitsTapReceiver"
+            android:exported="false" />
+
+        <service
+            android:name=".widgets.weekly.WeeklyHabitsWidgetService"
+            android:exported="false"
+            android:permission="android.permission.BIND_REMOTEVIEWS" />
+
         <receiver
             android:name=".receivers.ReminderReceiver"
             android:exported="true">
