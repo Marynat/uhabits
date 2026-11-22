@@ -26,7 +26,7 @@
     android:minHeight="110dp"
     android:minResizeWidth="180dp"
     android:minResizeHeight="40dp"
-    android:previewImage="@drawable/widget_preview_checkmark"
+    android:previewImage="@drawable/widget_preview_weekly_habits"
     android:resizeMode="horizontal|vertical"
     android:targetCellWidth="4"
     android:targetCellHeight="2"
