@@ -64,7 +64,7 @@ internal class WeeklyHabitsViewsFactory(
     override fun onDataSetChanged() {
         if (Looper.myLooper() == null) Looper.prepare()
         val prefs = component.preferences
-        val r = WeeklyHabitsRenderer(context, prefs, component.midnightTimer)
+        val r = WeeklyHabitsRenderer(context, prefs)
         renderer = r
         items = ListHabitsPresenter.buildState(
             allHabits = component.habitList,

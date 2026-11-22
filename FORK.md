@@ -43,7 +43,8 @@ Then build, install and check the widget.
 ## Where the widget lives
 
 New code is in `uhabits-android/src/main/java/org/isoron/uhabits/widgets/weekly/` plus
-resources named `widget_weekly_habits*` and `strings_weekly_widget.xml`. Existing files
+resources named `widget_weekly_habits*`, `strings_weekly_widget.xml` and
+`styles_weekly_widget.xml`. Existing files
 touched (each edit is marked with a `Fork:` comment):
 
 - `AndroidManifest.xml`: registers the widget provider, its tap receiver and the list
@@ -56,6 +57,10 @@ touched (each edit is marked with a `Fork:` comment):
 The rows are the main screen's own checkmark and number panels drawn into bitmaps, so
 upstream changes to those views show up in the widget. `WeeklyHabitRowView` copies the
 sizes of `HabitCardView`; check them after a merge that touches the habit list.
+
+The day header is plain text views that copy `HeaderView`'s style, not a bitmap. On some
+Android 17 builds, a bitmap in the widget's frame shifts every list row's bitmap by one, so
+each row shows the habit above it and the first row shows the header.
 
 ## Building
 

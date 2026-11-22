@@ -22,8 +22,9 @@ import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
-import android.graphics.drawable.Icon
 import android.net.Uri
+import android.os.Build
+import android.util.TypedValue.COMPLEX_UNIT_PX
 import android.view.View
 import android.widget.RemoteViews
 import org.isoron.uhabits.HabitsApplication
@@ -31,6 +32,8 @@ import org.isoron.uhabits.R
 import org.isoron.uhabits.activities.habits.list.ListHabitsActivity
 import org.isoron.uhabits.widgets.BaseWidget
 import org.isoron.uhabits.widgets.BaseWidgetProvider
+import kotlin.math.max
+import kotlin.math.roundToInt
 
 class WeeklyHabitsWidgetProvider : BaseWidgetProvider() {
     override fun getWidgetFromId(context: Context, id: Int): BaseWidget = WeeklyHabitsWidget(context, id)
@@ -55,7 +58,7 @@ class WeeklyHabitsWidget(context: Context, widgetId: Int) : BaseWidget(context, 
 
     override fun getRemoteViews(width: Int, height: Int): RemoteViews {
         val app = context.applicationContext as HabitsApplication
-        val renderer = WeeklyHabitsRenderer(app, prefs, app.component.midnightTimer)
+        val renderer = WeeklyHabitsRenderer(app, prefs)
         val views = RemoteViews(context.packageName, R.layout.widget_weekly_habits)
 
         views.setInt(R.id.weeklyBackground, "setColorFilter", renderer.backgroundColor)
@@ -64,9 +67,7 @@ class WeeklyHabitsWidget(context: Context, widgetId: Int) : BaseWidget(context, 
         // The day header only fits when there is room for it plus a couple of rows.
         val showHeader = height >= renderer.headerHeight(width) + 2 * renderer.rowHeight(width)
         if (showHeader) {
-            // An Icon, not setImageViewBitmap: on newer Android the list rows are merged into
-            // this RemoteViews and a bitmap here would replace the first row's bitmap.
-            views.setImageViewIcon(R.id.weeklyHeader, Icon.createWithBitmap(renderer.renderHeader(width)))
+            setHeader(views, renderer.header(width))
             views.setViewVisibility(R.id.weeklyHeader, View.VISIBLE)
         } else {
             views.setViewVisibility(R.id.weeklyHeader, View.GONE)
@@ -87,10 +88,45 @@ class WeeklyHabitsWidget(context: Context, widgetId: Int) : BaseWidget(context, 
         return views
     }
 
+    /**
+     * Fills the header's text views. No bitmaps here: the list rows' bitmaps share an index
+     * table with this RemoteViews on some Android builds, and a bitmap in the frame shifts
+     * every row by one.
+     */
+    private fun setHeader(views: RemoteViews, header: WeeklyHabitsHeader) {
+        views.setInt(R.id.weeklyHeader, "setBackgroundColor", header.backgroundColor)
+        var vertical = 0
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            views.setViewLayoutHeight(R.id.weeklyHeader, header.height.toFloat(), COMPLEX_UNIT_PX)
+        } else {
+            // Older versions can't set the height, so pad two lines of text up to it.
+            vertical = max(0, ((header.height - 2.4f * header.textSize) / 2).roundToInt())
+        }
+        views.setViewPadding(R.id.weeklyHeader, header.paddingLeft, vertical, header.paddingRight, vertical)
+        DAY_IDS.forEachIndexed { index, id ->
+            views.setTextViewText(id, header.labels[index])
+            views.setTextColor(id, header.textColor)
+            views.setTextViewTextSize(id, COMPLEX_UNIT_PX, header.textSize)
+        }
+    }
+
     private fun openAppIntent(): PendingIntent = PendingIntent.getActivity(
         context,
         0,
         Intent(context, ListHabitsActivity::class.java),
         PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
     )
+
+    companion object {
+        /** The header's day columns, left to right. */
+        private val DAY_IDS = intArrayOf(
+            R.id.weeklyDay0,
+            R.id.weeklyDay1,
+            R.id.weeklyDay2,
+            R.id.weeklyDay3,
+            R.id.weeklyDay4,
+            R.id.weeklyDay5,
+            R.id.weeklyDay6
+        )
+    }
 }

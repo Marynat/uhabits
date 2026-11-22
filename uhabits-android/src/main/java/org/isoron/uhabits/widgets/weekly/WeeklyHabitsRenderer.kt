@@ -26,14 +26,14 @@ import android.view.ContextThemeWrapper
 import android.view.View
 import android.view.View.MeasureSpec
 import org.isoron.platform.gui.toInt
+import org.isoron.platform.time.JavaLocalDateFormatter
+import org.isoron.platform.time.getToday
 import org.isoron.uhabits.R
-import org.isoron.uhabits.activities.habits.list.views.HeaderState
-import org.isoron.uhabits.activities.habits.list.views.HeaderView
 import org.isoron.uhabits.core.preferences.Preferences
 import org.isoron.uhabits.core.ui.screens.habits.list.HabitCardState
 import org.isoron.uhabits.core.ui.views.Theme
-import org.isoron.uhabits.core.utils.MidnightTimer
 import org.isoron.uhabits.utils.StyledResources
+import java.util.Locale
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -41,15 +41,29 @@ import kotlin.math.roundToInt
 class WeeklyHabitsRow(val bitmap: Bitmap, val today: Rect)
 
 /**
- * Draws the main screen's header and habit rows into bitmaps for the weekly habits widget.
+ * The day header, as text for the widget's own text views. [labels] run left to right.
+ * The padding puts the seven columns exactly over the rows' day buttons.
+ */
+class WeeklyHabitsHeader(
+    val labels: List<String>,
+    val paddingLeft: Int,
+    val paddingRight: Int,
+    val height: Int,
+    val textSize: Float,
+    val textColor: Int,
+    val backgroundColor: Int
+)
+
+/**
+ * Draws the main screen's habit rows into bitmaps for the weekly habits widget, and lays out
+ * the day header to match them.
  *
  * Views are laid out at the width the main screen would use. When the widget is narrower than
  * one full row, the finished bitmap is scaled down, so the widget keeps the main screen's look.
  */
 class WeeklyHabitsRenderer(
     appContext: Context,
-    private val preferences: Preferences,
-    private val midnightTimer: MidnightTimer
+    private val preferences: Preferences
 ) {
     private val themeSwitcher = WeeklyHabitsThemeSwitcher(appContext, preferences).apply { apply() }
 
@@ -77,10 +91,36 @@ class WeeklyHabitsRenderer(
 
     fun rowHeight(widthPx: Int): Int = ((buttonHeight + cardMargin) * scaleFor(widthPx)).roundToInt()
 
-    fun renderHeader(widthPx: Int): Bitmap {
-        val header = HeaderView(context, preferences, midnightTimer)
-        header.setState(HeaderState(BUTTON_COUNT, 0))
-        return render(header, widthPx)
+    /**
+     * Same labels, text style and column positions as the main screen's HeaderView, but as
+     * text: a bitmap in the widget's frame shifts the list rows' bitmaps by one on some
+     * Android builds, so every row would show the image of the row above it.
+     */
+    fun header(widthPx: Int): WeeklyHabitsHeader {
+        val scale = scaleFor(widthPx)
+        val buttonWidth = context.resources.getDimension(R.dimen.checkmarkWidth)
+        val columns = (BUTTON_COUNT * buttonWidth * scale).roundToInt()
+        val edge = (cardMargin * scale).roundToInt()
+        val start = max(0, widthPx - columns - edge)
+        val rtl = context.resources.configuration.layoutDirection == View.LAYOUT_DIRECTION_RTL
+
+        val today = getToday()
+        val formatter = JavaLocalDateFormatter(Locale.getDefault())
+        val days = (0 until BUTTON_COUNT).map { index ->
+            val date = today.minus(index)
+            formatter.shortWeekdayName(date).uppercase() + "\n" + date.day
+        }
+        // Today is on the left unless the order is reversed, and everything mirrors in RTL.
+        val todayOnLeft = preferences.isCheckmarkSequenceReversed == rtl
+        return WeeklyHabitsHeader(
+            labels = if (todayOnLeft) days else days.reversed(),
+            paddingLeft = if (rtl) edge else start,
+            paddingRight = if (rtl) start else edge,
+            height = headerHeight(widthPx),
+            textSize = context.resources.getDimension(R.dimen.tinyTextSize) * scale,
+            textColor = styled.getColor(R.attr.contrast60),
+            backgroundColor = styled.getColor(R.attr.headerBackgroundColor)
+        )
     }
 
     fun renderRow(card: HabitCardState, widthPx: Int): WeeklyHabitsRow {
