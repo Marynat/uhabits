@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fork build type (see FORK.md): tells this build apart from the official app. -->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="main_activity_title" tools:ignore="MissingTranslation">Habits (fork)</string>
+</resources>

@@ -82,6 +82,13 @@ android {
         debug {
             enableUnitTestCoverage = true
         }
+
+        // Fork: a debug build that installs next to the official app (see FORK.md).
+        create("fork") {
+            initWith(getByName("debug"))
+            applicationIdSuffix = ".fork"
+            enableUnitTestCoverage = false
+        }
     }
 
     compileOptions {

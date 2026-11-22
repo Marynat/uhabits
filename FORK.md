@@ -51,6 +51,7 @@ touched (each edit is marked with a `Fork:` comment):
 - `widgets/WidgetUpdater.kt`: refreshes the weekly widget on every change. The per-habit
   filter there looks up habit ids stored for single-habit widgets, which this widget has
   none of.
+- `uhabits-android/build.gradle.kts`: adds the `fork` build type (see Building).
 
 The rows are the main screen's own checkmark and number panels drawn into bitmaps, so
 upstream changes to those views show up in the widget. `WeeklyHabitRowView` copies the
@@ -63,17 +64,29 @@ sizes of `HabitCardView`; check them after a merge that touches the habit list.
   `brew install --cask temurin@17`, then:
 
 ```bash
-./gradlew :uhabits-android:assembleDebug
+JAVA_HOME=$(/usr/libexec/java_home -v 17) ./gradlew :uhabits-android:assembleFork
 ```
 
-The APK ends up in `uhabits-android/build/outputs/apk/debug/`.
+The APK ends up in `uhabits-android/build/outputs/apk/fork/`.
+
+The `fork` build type (in `uhabits-android/build.gradle.kts`, plus `src/fork/`) is a debug
+build with the package name `org.isoron.uhabits.fork` and the label "Habits (fork)". Its
+FileProvider gets its own authority. The plain `debug` build keeps upstream's package name.
 
 ## Installing on a phone
 
-- This build is signed with a different key than the Play Store / F-Droid app, so it
-  cannot be installed over the official app. Export a backup in the official app first
-  (Settings → Export full backup), uninstall it, install this build, then import the
-  backup.
+```bash
+adb install -r uhabits-android/build/outputs/apk/fork/uhabits-android-fork.apk
+```
+
+- The fork build installs next to the official app. The two keep separate data and don't
+  sync. To start from your real habits, export a backup in the official app
+  (Settings → Export full backup) and import it in "Habits (fork)".
+- Sharing an exported file from the fork through the share sheet doesn't work: upstream
+  hardcodes the official app's FileProvider authority in `utils/ViewExtensions.kt`.
+  Importing is not affected.
+- The label override only covers the default (English) strings. On a phone set to a
+  language with its own translation, both apps are called "Habits" in that language.
 - `dev` uses database version 26 (habit categories); v2.3.2 uses 25. A backup made by this
   build cannot be imported into the official v2.3.2 app until upstream releases the next
   version.
