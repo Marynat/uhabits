@@ -64,10 +64,13 @@ class WeeklyHabitsWidget(context: Context, widgetId: Int) : BaseWidget(context, 
         views.setInt(R.id.weeklyBackground, "setColorFilter", renderer.backgroundColor)
         views.setInt(R.id.weeklyBackground, "setImageAlpha", prefs.widgetOpacity)
 
+        // Rows are drawn for the portrait width in both orientations (see weeklyRowWidthPx),
+        // so the header is laid out for that width too, to stay above the rows' buttons.
+        val rowWidth = weeklyRowWidthPx(context, id).takeIf { it > 0 } ?: width
         // The day header only fits when there is room for it plus a couple of rows.
-        val showHeader = height >= renderer.headerHeight(width) + 2 * renderer.rowHeight(width)
+        val showHeader = height >= renderer.headerHeight(rowWidth) + 2 * renderer.rowHeight(rowWidth)
         if (showHeader) {
-            setHeader(views, renderer.header(width))
+            setHeader(views, renderer.header(rowWidth, width))
             views.setViewVisibility(R.id.weeklyHeader, View.VISIBLE)
         } else {
             views.setViewVisibility(R.id.weeklyHeader, View.GONE)

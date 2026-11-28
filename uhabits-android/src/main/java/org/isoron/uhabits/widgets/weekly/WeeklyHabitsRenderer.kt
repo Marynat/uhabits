@@ -95,13 +95,17 @@ class WeeklyHabitsRenderer(
      * Same labels, text style and column positions as the main screen's HeaderView, but as
      * text: a bitmap in the widget's frame shifts the list rows' bitmaps by one on some
      * Android builds, so every row would show the image of the row above it.
+     *
+     * [widthPx] is the rows' width. When the widget is wider ([widgetWidthPx], e.g. in
+     * landscape) the rows sit at its start edge, so the extra space goes on the end side.
      */
-    fun header(widthPx: Int): WeeklyHabitsHeader {
+    fun header(widthPx: Int, widgetWidthPx: Int = widthPx): WeeklyHabitsHeader {
         val scale = scaleFor(widthPx)
         val buttonWidth = context.resources.getDimension(R.dimen.checkmarkWidth)
         val columns = (BUTTON_COUNT * buttonWidth * scale).roundToInt()
         val edge = (cardMargin * scale).roundToInt()
         val start = max(0, widthPx - columns - edge)
+        val end = edge + max(0, widgetWidthPx - widthPx)
         val rtl = context.resources.configuration.layoutDirection == View.LAYOUT_DIRECTION_RTL
 
         val today = getToday()
@@ -114,8 +118,8 @@ class WeeklyHabitsRenderer(
         val todayOnLeft = preferences.isCheckmarkSequenceReversed == rtl
         return WeeklyHabitsHeader(
             labels = if (todayOnLeft) days else days.reversed(),
-            paddingLeft = if (rtl) edge else start,
-            paddingRight = if (rtl) start else edge,
+            paddingLeft = if (rtl) end else start,
+            paddingRight = if (rtl) start else end,
             height = headerHeight(widthPx),
             textSize = context.resources.getDimension(R.dimen.tinyTextSize) * scale,
             textColor = styled.getColor(R.attr.contrast60),

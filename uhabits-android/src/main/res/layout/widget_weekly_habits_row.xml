@@ -21,23 +21,38 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
-    <ImageView
-        android:id="@+id/weeklyRowImage"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:adjustViewBounds="true"
-        android:scaleType="fitCenter" />
-
-    <!-- Padding is set in code so that weeklyRowTap covers only today's box. -->
+    <!--
+      Sized to the row bitmap, not stretched to the widget: rows are drawn for the portrait
+      width, so on a wider (landscape) widget they keep their size and their tap box.
+    -->
     <FrameLayout
-        android:id="@+id/weeklyRowTapArea"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="start">
 
-        <FrameLayout
-            android:id="@+id/weeklyRowTap"
+        <!--
+          match_parent still ends up the bitmap's width here (the parent wraps it), and
+          FrameLayout only stretches match_parent children to its size when it has two or
+          more, so this keeps weeklyRowTapArea the full row height.
+        -->
+        <ImageView
+            android:id="@+id/weeklyRowImage"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@drawable/widget_weekly_habits_tap" />
+            android:layout_height="wrap_content"
+            android:adjustViewBounds="true"
+            android:scaleType="fitCenter" />
+
+        <!-- Padding is set in code so that weeklyRowTap covers only today's box. -->
+        <FrameLayout
+            android:id="@+id/weeklyRowTapArea"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <FrameLayout
+                android:id="@+id/weeklyRowTap"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/widget_weekly_habits_tap" />
+        </FrameLayout>
     </FrameLayout>
 </FrameLayout>

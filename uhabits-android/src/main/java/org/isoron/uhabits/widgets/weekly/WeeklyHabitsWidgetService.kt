@@ -21,7 +21,6 @@ package org.isoron.uhabits.widgets.weekly
 import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
-import android.content.res.Configuration.ORIENTATION_LANDSCAPE
 import android.os.Looper
 import android.widget.RemoteViews
 import android.widget.RemoteViewsService
@@ -32,6 +31,21 @@ import org.isoron.uhabits.core.models.HabitMatcher
 import org.isoron.uhabits.core.ui.screens.habits.list.HabitCardState
 import org.isoron.uhabits.core.ui.screens.habits.list.ListHabitsPresenter
 import org.isoron.uhabits.utils.InterfaceUtils.dpToPixels
+
+/**
+ * Width the list rows are drawn for: the widget's portrait width (OPTION_APPWIDGET_MIN_WIDTH,
+ * what BaseWidget uses for portrait).
+ *
+ * Rows exist in one layout only: newer Android versions turn them into RemoteCollectionItems,
+ * which can't have separate portrait and landscape layouts. They also can't follow the phone's
+ * orientation: that is the foreground app's, not the home screen's. Drawn for the landscape
+ * width while a game ran sideways, the rows showed up at half size on the portrait home screen.
+ */
+internal fun weeklyRowWidthPx(context: Context, widgetId: Int): Int {
+    val options = AppWidgetManager.getInstance(context).getAppWidgetOptions(widgetId)
+    val widthDp = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH)
+    return dpToPixels(context, widthDp.toFloat()).toInt()
+}
 
 class WeeklyHabitsWidgetService : RemoteViewsService() {
     override fun onGetViewFactory(intent: Intent): RemoteViewsFactory {
@@ -82,22 +96,7 @@ internal class WeeklyHabitsViewsFactory(
         val card = items.getOrNull(position) ?: return null
         val r = renderer ?: return null
         if (Looper.myLooper() == null) Looper.prepare()
-        return buildRow(r, card, currentWidthPx())
-    }
-
-    /**
-     * Width of the widget in the current orientation (min width in portrait, max width in
-     * landscape, like BaseWidget). One layout only: newer Android versions turn collection
-     * rows into RemoteCollectionItems, which reject separate portrait/landscape layouts.
-     */
-    private fun currentWidthPx(): Int {
-        val options = AppWidgetManager.getInstance(context).getAppWidgetOptions(widgetId)
-        val landscape = context.resources.configuration.orientation == ORIENTATION_LANDSCAPE
-        val key = when (landscape) {
-            true -> AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH
-            false -> AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH
-        }
-        return dpToPixels(context, options.getInt(key).toFloat()).toInt()
+        return buildRow(r, card, weeklyRowWidthPx(context, widgetId))
     }
 
     private fun buildRow(r: WeeklyHabitsRenderer, card: HabitCardState, widthPx: Int): RemoteViews {
